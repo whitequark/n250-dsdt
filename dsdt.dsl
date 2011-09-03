@@ -892,8 +892,9 @@ DefinitionBlock ("dsdt.aml", "DSDT", 1, "INTEL", "BEARG31A", 0x06040000)
                     CreateDWordField (BUF1, Local2, CAPB)
                     If (Arg2)
                     {
-                        And (CAPB, 0xFFFFFFFC)
-                        Or (CAPB, 0x00)
+                        /* FIX: Just guessing. */
+                        And (CAPB, 0xFFFFFFFC, CAPB)
+                        Or (CAPB, 0x00, CAPB)
                     }
                     Else
                     {
@@ -1051,7 +1052,7 @@ DefinitionBlock ("dsdt.aml", "DSDT", 1, "INTEL", "BEARG31A", 0x06040000)
                     0x00000000,         // Range Minimum
                     0x00000000,         // Range Maximum
                     0x00000000,         // Translation Offset
-                    0x00000000,         // Length
+                    0x00000001,         // Length
                     0x00,, _Y00, AddressRangeMemory, TypeStatic)
                 DWordIO (ResourceProducer, MinFixed, MaxFixed, PosDecode, EntireRange,
                     0x00000000,         // Granularity
@@ -1065,14 +1066,14 @@ DefinitionBlock ("dsdt.aml", "DSDT", 1, "INTEL", "BEARG31A", 0x06040000)
                     0x00000000,         // Range Minimum
                     0x00000000,         // Range Maximum
                     0x00000000,         // Translation Offset
-                    0x00000000,         // Length
+                    0x00000001,         // Length
                     0x00,, , AddressRangeMemory, TypeStatic)
                 DWordMemory (ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite,
                     0x00000000,         // Granularity
                     0xFED40000,         // Range Minimum
                     0xFED44FFF,         // Range Maximum
                     0x00000000,         // Translation Offset
-                    0x00000000,         // Length
+                    0x00005000,         // Length
                     ,, _Y0E, AddressRangeMemory, TypeStatic)
             })
             Method (_CRS, 0, Serialized)
@@ -1790,11 +1791,9 @@ DefinitionBlock ("dsdt.aml", "DSDT", 1, "INTEL", "BEARG31A", 0x06040000)
 
                     Method (_BQC, 0, NotSerialized)
                     {
-                        Divide (BRTL, 0x0A, Local0, Local1)
-                        If (LEqual (Local0, 0x00))
-                        {
-                            Return (BRTL)
-                        }
+                        /* FIX: Was: if(BRTL % 10 == 0) return BRTL;
+                                Otherwise it returned nothing. Nonsense. */
+                        Return (BRTL)
                     }
                 }
 
@@ -4199,13 +4198,15 @@ DefinitionBlock ("dsdt.aml", "DSDT", 1, "INTEL", "BEARG31A", 0x06040000)
             {
                 Name (_ADR, 0x001F0002)
                 OperationRegion (IDEP, PCI_Config, 0x10, 0x02)
-                Field (IDEP, DWordAcc, NoLock, Preserve)
+                /* FIX: DWordAcc -> WordAcc */
+                Field (IDEP, WordAcc, NoLock, Preserve)
                 {
                     PCMD,   16
                 }
 
                 OperationRegion (IDES, PCI_Config, 0x18, 0x02)
-                Field (IDES, DWordAcc, NoLock, Preserve)
+                /* FIX: DWordAcc -> WordAcc */
+                Field (IDES, WordAcc, NoLock, Preserve)
                 {
                     SCMD,   16
                 }
@@ -4237,7 +4238,8 @@ DefinitionBlock ("dsdt.aml", "DSDT", 1, "INTEL", "BEARG31A", 0x06040000)
                 }
 
                 OperationRegion (IDE1, PCI_Config, 0x90, 0x03)
-                Field (IDE1, DWordAcc, NoLock, Preserve)
+                /* FIX: DWordAcc -> ByteAcc */
+                Field (IDE1, ByteAcc, NoLock, Preserve)
                 {
                     MAP,    8, 
                             Offset (0x02), 
@@ -5842,6 +5844,9 @@ DefinitionBlock ("dsdt.aml", "DSDT", 1, "INTEL", "BEARG31A", 0x06040000)
         \_SB.SECS (0xAA)
         PNOT ()
         If (LEqual (OSYS, 0x07CE)) {}
+
+        /* FIX: Signal a successful wakeup. */
+        Return (Package () {0x00, 0x00})
     }
 
     Scope (\_SB)
