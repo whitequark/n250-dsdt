@@ -1,0 +1,4 @@
+To compile this, you will need package `iasl`.
+After installing it, type:
+
+  $ make
