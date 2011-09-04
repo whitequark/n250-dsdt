@@ -1347,7 +1347,8 @@ DefinitionBlock ("dsdt.aml", "DSDT", 1, "INTEL", "BEARG31A", 0x06040000)
                             Offset (0xB0), 
                             Offset (0xB1), 
                     CDVL,   5, 
-                            Offset (0xB2), 
+                            Offset (0xB4),
+                    BLVL,   8,
                             Offset (0xBC), 
                     ASLS,   32
                 }
@@ -1767,33 +1768,29 @@ DefinitionBlock ("dsdt.aml", "DSDT", 1, "INTEL", "BEARG31A", 0x06040000)
                     Method (_BCL, 0, NotSerialized)
                     {
                         Or (VDRV, 0x01, VDRV)
-                        Return (Package (0x08)
+
+                        /* FIX: Levels at PCI control point range from
+                         * 0x00 to 0xff. Let there be 16 points. */
+                        Return (Package (0x12)
                         {
-                            0x64, 
-                            0x05, 
-                            0x0F, 
-                            0x18, 
-                            0x1E, 
-                            0x2D, 
-                            0x3C, 
-                            0x50
+                            0xEE, /* proposed on AC adapter on */
+                            0x22, /* proposed on AC adapter off */
+                            0x01, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66,
+                            0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+                            0xEE, 0xFF
                         })
                     }
 
                     Method (_BCM, 1, NotSerialized)
                     {
-                        Divide (Arg0, 0x0A, Local0, Local1)
-                        If (LEqual (Local0, 0x00))
-                        {
-                            BRTW (Arg0)
-                        }
+                        /* FIX: Just use PCI control point directly. */
+                        Store (Arg0, \_SB.PCI0.IGD0.BLVL)
                     }
 
                     Method (_BQC, 0, NotSerialized)
                     {
-                        /* FIX: Was: if(BRTL % 10 == 0) return BRTL;
-                                Otherwise it returned nothing. Nonsense. */
-                        Return (BRTL)
+                        /* FIX: Same as above. */
+                        Return (\_SB.PCI0.IGD0.BLVL)
                     }
                 }
 
